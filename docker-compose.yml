@@ -1,0 +1,9 @@
+version: "3"
+
+services:
+  api:
+    build: .
+    command: npm start
+     -"4040:4040"
+    volumes: 
+    - .:/usr/app

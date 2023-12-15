@@ -1,0 +1,18 @@
+{
+  "name": "node-api-postgres",
+  "version": "1.0.0",
+  "description": "RESTful API with Node.js, Express, and PostgreSQL",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "nodemon": "^3.0.1",
+    "pg": "^8.11.1"
+  },
+  "scripts": {
+    "deploy": "sh deploy.sh",
+    "start": "nodemon index.js"
+  }
+}
