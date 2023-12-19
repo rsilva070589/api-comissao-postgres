@@ -1,68 +1,70 @@
+ 
 const database = require('../../config/database.js') 
+require('dotenv').config()
 
-const valorLogado = require('./Acesso.js') 
+let schemaUsuario =  process.env.DB_DATABASE_SCHEMA
 
-let schemaUsuario = null
+console.log(process.env.DB_DATABASE_SCHEMA)
 
 const getLogin = async (usuario,response) => {
   const id = usuario
-  console.log('Base de dados do '+id)
+
 
   database.pool.query('SELECT * FROM comissao.acesso WHERE usuario = $1', [id],(error, results) => {
     if (error) {
       response.status(500).send(`Ocorreu um ` + error) 
     }
-    if (!error)
-    console.log(valorLogado)
+    if (!error) 
     schemaUsuario = results.rows[0]?.schema 
   })
-}
-
-
- 
+} 
 
 const getUsers = async (request, response) => {
-  const username = request.params.username
-  await getLogin(username)
-  console.log(username)
   
+  const mes = request.params.id
+  console.log(mes)
+  const arrayUsuarios = []
 
-  if (schemaUsuario){
-    let query = 'SELECT * FROM "' +schemaUsuario+'".usuarios ORDER BY NOME ASC'
-    console.log(query)
-  
+  let query = null
+    if (!request.params.id){
+      query = 'SELECT * FROM "' +schemaUsuario+'".usuarios  ORDER BY "NOME" ASC'
+    }else{
+      query = 'SELECT * FROM "' +schemaUsuario+'".usuarios where "MES" = $1 ORDER BY "NOME" ASC'
+    }
+
+  if (schemaUsuario && query != null){ 
+    
+    if(request.params.id){
+      database.pool.query(query,[mes.replace('-','/')], (error, results) => {
+        if (error) {
+          response.status(500).send(`Ocorreu um ` + error) 
+        }
+        if (!error){  
+        response.status(200).json(results.rows)     
+        }
+      } )
+   }else{
     database.pool.query(query, (error, results) => {
       if (error) {
         response.status(500).send(`Ocorreu um ` + error) 
       }
-      if (!error)
-      response.status(200).json(results.rows)
-    })
+      if (!error){
+        response.status(200).json(results.rows)
+        }})}
+    
+  
+    
   }else{
     response.status(500).send(`nao tem schema `) 
   }
   
 }
-
-const getUserById = (request, response) => {
-  const id = parseInt(request.params.id)
-
-  database.pool.query('SELECT * FROM mercearia.vwprodutos WHERE id = $1', [id], (error, results) => {
-    if (error) {
-      response.status(400).send(`Ocorreu um erro ao buscar Registros`)
-      throw error
-    }
-    if (!error){
-      response.status(200).json(results.rows)
-    }
-    
-  })
-}
+ 
 
 const createUser = (request, response) => {
   const { CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE } = request.body
 
-  database.pool.query('INSERT INTO mercearia.produtos (CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE)  VALUES ($1, $2,$3,$4,$5,$6,$7,$8,$9) RETURNING *', 
+  database.pool.query('INSERT INTO  "' +schemaUsuario+'".usuarios (CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE)  VALUES ($1, $2,$3,$4,$5,$6,$7,$8,$9) RETURNING *', 
                 [CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE],
                  (error, results) => {
     if (error) {             
@@ -98,7 +100,7 @@ const updateUser = (request, response) => {
 const deleteUser = (request, response) => {
   const id = parseInt(request.params.id)
 
-  database.pool.query('DELETE FROM mercearia.produtos WHERE id = $1', [id], (error, results) => {
+  database.pool.query('DELETE FROM  "' +schemaUsuario+'".usuarios WHERE id = $1', [id], (error, results) => {
     if (error) {
       throw error
     }
@@ -109,8 +111,7 @@ const deleteUser = (request, response) => {
 }
 
 module.exports = {
-  getUsers,
-  getUserById,
+  getUsers, 
   createUser,
   updateUser,
   deleteUser,

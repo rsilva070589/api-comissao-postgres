@@ -3,13 +3,13 @@ require('dotenv').config()
 const Pool = require('pg').Pool
 
 const pool = new Pool({
-    user: process.env.DB_NAME,
-    host: process.env.DB_HOST,// '172.17.0.1',
-    database: process.env.DB_DATABASE,
-    password: process.env.DB_PASS,
-    port: process.env.DB_PORT,
+    user: 'postgres',
+    host: '34.134.142.37',// '172.17.0.1',
+    database: 'postgres',
+    password: 'BancoPro@123',
+    port: '5432',
   })
-  
+ 
 
   module.exports = {
     pool      

@@ -3,7 +3,7 @@ const database = require('../../config/database.js')
 const valorLogado = 'MGARCAS'
 const getLogin = (request, response) => {
     const id = request.params.id
-    console.log('Base de dados do '+id)
+
 
     database.pool.query('SELECT * FROM comissao.acesso WHERE usuario = $1', [id],(error, results) => {
       if (error) {
