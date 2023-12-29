@@ -4,6 +4,7 @@ require('dotenv').config()
 let schemaUsuario =  process.env.DB_DATABASE_SCHEMA
 var arrayUsuarios = []
 var arrayRegras   = []
+var arrayRegrasAux = []
 var arrayVendaLista = []
 var arrayVendaGroup = [] 
 var metaGet   = []
@@ -20,7 +21,8 @@ async function getUsuarios(body,response) {
     if (!error) { 
       results.rows.map(x => {
         arrayUsuarios.push(x)
-      })     
+      })  
+      getRegrasAux(body,response)   
       getRegras(body,response)  
       
     }   
@@ -38,8 +40,24 @@ async function getRegras(body,response){
       results.rows.map(x => {
         arrayRegras.push(x)
       })  
-      getVendas(body,response)
+      
+      getVendas(body,response)     
      // response.status(200).json(arrayRegras)
+    }   
+  }) 
+}
+
+async function getRegrasAux(body,response){
+  arrayRegras = []
+  const query = 'SELECT * FROM "' +schemaUsuario+'".comissoes_faixa_aux where  "MES" = $1' 
+  database.pool.query(query,[body.MES],(error, results) => { 
+    if (error) {
+      console.log(`erro ao buscar regras Auxiliar:  ` + error) 
+    }
+    if (!error) { 
+      results.rows.map(x => {
+        arrayRegrasAux.push(x)
+      })        
     }   
   }) 
 }
@@ -60,6 +78,11 @@ async function getMeta(context,response) {
   if (context.NOME && !context.COLABORADOR) { 
     binds.push(context.NOME); 
     query += ' and  "VENDEDOR" = $'+binds.length;
+  }
+
+  if (context.COD_EMPRESA) { 
+    binds.push(context.COD_EMPRESA); 
+    query += ' and  "COD_EMPRESA_VENDEDORA" = $'+binds.length;
   }
  
  database.pool.query(query,binds,(error, results) => { 
@@ -95,24 +118,24 @@ async function getVendas(context,response) {
 
   console.log(context)
  
-  const baseQueryFechada =  'select * FROM "' +schemaUsuario+'"."comissao_encerrada"    where 1=1 ';  
+  const baseQueryFechada =  'select * FROM "' +schemaUsuario+'"."vw_comissao_encerrada"    where 1=1 ';  
   let query = baseQueryFechada; 
   let binds = []
 
   if (context.MES)         {  binds.push(context.MES); query += ` and  "MES_VENDA" = $`+binds.length;  }
-  if (context.COD_EMPRESA) {  binds.push(context.COD_EMPRESA); query += ` and "cod_empresa_vendedora" = $`+binds.length;  }
+  if (context.COD_EMPRESA) {  binds.push(context.COD_EMPRESA); query += ` and "COD_EMPRESA_VENDEDORA" = $`+binds.length;  }
   if (context.MARCA)       {  binds.push(context.MARCA); query += ` and "MARCA" = $`+binds.length;  }
   if (context.SETOR)       {  binds.push(context.SETOR); query += ` and  "MARCA" = $`+binds.length;  }
   if (context.NOME && !context.COLABORADOR )  {  binds.push(context.NOME) ;  query += ` and  "VENDEDOR" = $`+binds.length;  }
   if (context.PERIODO_INI) {  binds.push(context.PERIODO_INI); query += ` and  "DATA_VENDA" >= $`+binds.length;  }
   if (context.PERIODO_FIM) {  binds.push(context.PERIODO_FIM); query += ` and  "DATA_VENDA" <= $`+binds.length;  }
  
-  const baseQueryGroupFechada = 'select "COD_EMPRESA_VENDEDORA","VENDEDOR","MES_VENDA","MARCA","TIPO",SUM("TOTAL_VENDA") as TOTAL_VENDA, SUM("DESPESAS") as DESPESAS,SUM("GANHOS") as GANHOS,(COUNT(*)) AS QTDE FROM "' +schemaUsuario+'".comissao_encerrada x where 1 = 1  ';
+  const baseQueryGroupFechada = 'select "COD_EMPRESA_VENDEDORA","VENDEDOR","MES_VENDA","MARCA","TIPO",SUM("TOTAL_VENDA") as TOTAL_VENDA, SUM("DESPESAS") as DESPESAS,SUM("GANHOS") as GANHOS,(COUNT(*)) AS QTDE FROM "' +schemaUsuario+'".vw_comissao_encerrada x where 1 = 1  ';
   let queryGroup = baseQueryGroupFechada
   let bindsGroup = []  
 
   if (context.MES)          { bindsGroup.push(context.MES);         queryGroup += ` and  "MES_VENDA" =  $`+bindsGroup.length;  }
-  if (context.COD_EMPRESA)  { bindsGroup.push(context.COD_EMPRESA); queryGroup += ` and  "cod_empresa_vendedora" = $`+bindsGroup.length;  }
+  if (context.COD_EMPRESA)  { bindsGroup.push(context.COD_EMPRESA); queryGroup += ` and  "COD_EMPRESA_VENDEDORA" = $`+bindsGroup.length;  }
   if (context.MARCA)        { bindsGroup.push(context.MARCA);       queryGroup += ` and  "MARCA" = $`+bindsGroup.length;  }
   if (context.SETOR)        { bindsGroup.push(context.SETOR);       queryGroup += ` and "MARCA" = $`+bindsGroup.length;  }
   if (context.NOME && !context.COLABORADOR)  { bindsGroup.push(context.NOME);        queryGroup += ` and "VENDEDOR" = $`+bindsGroup.length;  }
@@ -264,6 +287,17 @@ function somaValor(array) {
     sum+=arr[i]; 
   }     
   return arredonda(sum,2)
+}
+
+function somaValorInteiro(array) { 
+  var arr =  array 
+ // console.log(array)    
+  var sum = 0; 
+  for(var i =0;i<arr.length;i++){ 
+    sum+=arr[i]; 
+    
+  }     
+  return sum
 }
 
 function comissaoFaixa(arrayVendas,usuario,mes,meta,arrayRegras) { 
@@ -419,37 +453,37 @@ function comissaoColaboradores(arrayVendas,tipoComissao,usuario,mes,meta,arrayRe
   }) 
 
   return arrayFiltro
-}
-
+} 
+ 
 function comissaoSupervisor(arrayVendas,mes,usuario,meta,arrayRegras) {  
   const arrayGestor = []    
   const arrayFiltro = [] 
   const arrayVendasLista = []
   const arrayfiltroGestorFaixa = []    
   const arrayAjusteObjeto = []
-  const notaNPS = false 
+  const notaNPS = false
+  const arrayMargens = []
+  arrayMargens.pop()
+  let  qtdeteste = 0
 
-  if(usuario?.GESTOR > 1){ 
-                                          arrayVendas.filter(f => f.COD_EMPRESA_VENDEDORA == usuario.COD_EMPRESA
-                                                                  &&    f.MES_VENDA  == mes
-                                                                  &&    f.TIPO       != 'DSR' 
-                                                                       ).map(x => {
-                                                                                    const dados = {
-                                                                                                  "COD_EMPRESA":  x.COD_EMPRESA_VENDEDORA,
-                                                                                                  "TIPO":         x.TIPO,
-                                                                                                  "TOTAL_VENDA":  arredonda(x.TOTAL_VENDA,2),
-                                                                                                  "MES_VENDA":    x.MES_VENDA,
-                                                                                                  "QTDE":         meta.TOTAL_VENDA ||0,
-                                                                                                  "ANALITICO":    x.ANALITICO,
-                                                                                                  "COMISSAO":    arredonda(x.TOTAL_VENDA * x.PERC,2) 
-                                                                                                  }
-                                                                                                  arrayFiltro.push(dados)
-                                                                                                  })
-                                          } 
-                                              if(usuario?.GESTOR == 'M'){
-                                                arrayVendas.filter(f => f.MARCA == usuario.MARCA 
-                                                  &&    f.MES_VENDA == mes
-                                                  ).map(x => {
+ 
+ 
+                                        function vendas(){
+                                          if(usuario?.GESTOR > 1){ 
+                                            return arrayVendas.filter(f => f.COD_EMPRESA_VENDEDORA == usuario.COD_EMPRESA
+                                                                        &&    f.MES_VENDA  == mes
+                                                                        &&    f.TIPO       != 'DSR' 
+                                                  )
+                                          }
+
+                                          if(usuario?.GESTOR == 'M'){
+                                            return arrayVendas.filter(f => f.MARCA == usuario.MARCA 
+                                              &&    f.MES_VENDA == mes)
+                                          }
+                                        }                                         
+                                 
+                                              if(1){
+                                                vendas().map(x => {
                                                                                     const dados = {
                                                                                                   "COD_EMPRESA":  x.COD_EMPRESA_VENDEDORA,
                                                                                                   "TIPO":         x.TIPO,
@@ -570,22 +604,114 @@ function comissaoSupervisor(arrayVendas,mes,usuario,meta,arrayRegras) {
 
 
                                            //GESTOR COM FAIXA
-                                           arrayVendas.map(x => x.ANALITICO.map(n1 => {arrayVendasLista.push(n1)}))
+                                           vendas().map(x => x.ANALITICO.map(n1 => {arrayVendasLista.push(n1)}))
 
- 
+                                           
+                                              
                                            arrayRegras.filter(f => f.MES==mes && f.COD_EMPRESA == usuario.COD_EMPRESA && f.COD_FUNCAO == usuario.COD_FUNCAO && f.USA_FAIXA == 'S').map(r => {
-                                            arrayVendasLista.filter(
-                                              f =>   f.MARCA == usuario.MARCA
-                                                  && f.MES_VENDA == mes
-                                                  && f.TIPO == r.TIPO_COMISSAO
-                                          ).map(item => {  
-                                             
+
+                                            vendas().filter(f => f.TIPO == r.TIPO_COMISSAO).map(x=> x.ANALITICO).map(x1 => arrayMargens.push(x1))
+                                            //console.log(somaValorInteiro(arrayMargens[0].map(x=> parseFloat(x.MARGEM_VENDA))))
+                                            metaVlr = somaValor(vendas(r.TIPO_COMISSAO).map(x=> x.TOTAL_VENDA))
+                                            metaQtde = somaValorInteiro( vendas().filter(f => f.TIPO == r.TIPO_COMISSAO).map(x=> parseInt(x.QTDE)))
+                                          //  somaMargem = somaValorInteiro( )
+                                          ///  console.log(vendas().filter(f => f.TIPO == r.TIPO_COMISSAO).length)
+                                            metaMargem = Math.round(((somaValorInteiro(arrayMargens[0].map(x=> parseFloat(x.MARGEM_VENDA)))) / metaQtde), -2)
+                                            console.log(metaMargem)
+                                            bonusPerc = arrayRegrasAux.filter(f =>  f.MES   == mes &&  f.COD_EMPRESA == usuario.COD_EMPRESA
+                                              &&  f.PERC_MIN  <= metaMargem
+                                              &&  f.PERC_MAX  >= metaMargem
+                                              &&  f.TIPO_COMISSAO == r.TIPO_COMISSAO  ).map(x => x.PERC)[0] 
+
+                                                    console.log('META GESTOR - TIPO '+r.TIPO_COMISSAO+' valor - '+metaVlr+' Qtde: '+ metaQtde+ ' bonusPerc: '+bonusPerc)
+                                                    vendas().map(item => {  
+                                                              
+                                                                    //faixa valor meta
+                                                                    arrayRegras.filter(f =>  f.MES   == mes
+                                                                      && f.COD_EMPRESA == usuario.COD_EMPRESA
+                                                                      && f.COD_FUNCAO  == usuario.COD_FUNCAO
+                                                                      && f.USA_FAIXA   == 'S' 
+                                                                    // && f.PERC_MIN    == 0
+                                                                      && metaVlr >= f.VALOR_MIN    
+                                                                      && metaVlr <  f.VALOR_MAX     
+                                                                      &&  f.MEDIA_ACESSORIOS_MIN == null
+                                                                      &&  f.TIPO_COMISSAO == item.TIPO
+                                                                      ).map(rf => {  
+                                                                      //  console.log(item.ANALITICO)
+                                                                        item.ANALITICO.map(item1 => {
+                                                                          var dadosVendas  = {
+                                                                            "CHASSI": item1.CHASSI,                                                                                         
+                                                                            "CPF": item1.COD_CLIENTE,
+                                                                            "DATA_VENDA": item1.DATA_VENDA,
+                                                                            "COD_EMPRESA": item1.EMPRESA,
+                                                                            "MES_VENDA": item1.MES_VENDA,
+                                                                            "NOME_CLIENTE": item1.NOME_CLIENTE,
+                                                                            "PROPOSTA": item1.COD_PROPOSTA,
+                                                                            "DESCRICAO_MODELO": item1.DESCRICAO_MODELO,
+                                                                            "COD_PROPOSTA": item1.COD_PROPOSTA,
+                                                                            "MARGEM_VENDA": item1.MARGEM_VENDA,
+                                                                            "TOTAL_VENDA": item1.TOTAL_VENDA,
+                                                                            "TIPO": item1.TIPO,
+                                                                            "QTDE": item1.QTDE,
+                                                                            "PERCENTUAL": rf.PERC,
+                                                                            "COMISSAO": arredonda(item1.TOTAL_VENDA * rf.PERC,2),
+                                                                            "VENDEDOR":       item1.VENDEDOR                                                                       
+                                                                            } 
+                                                                        
+                                                                            if(arrayfiltroGestorFaixa.filter(f => f.COD_PROPOSTA == item1.COD_PROPOSTA ).length == 0){
+                                                                              // console.log(dadosVendas)
+                                                                              arrayfiltroGestorFaixa.push(dadosVendas) 
+                                                                             }
+                                                                        })                                                                                                                                          
+                                                                     
+                                                                    }) 
+
+
+                                                              //faixa percentual
                                                               arrayRegras.filter(f =>  f.MES   == mes
                                                                                   && f.COD_EMPRESA == usuario.COD_EMPRESA
                                                                                   && f.COD_FUNCAO  == usuario.COD_FUNCAO
                                                                                   && f.USA_FAIXA   == 'S' 
                                                                                   && f.PERC_MIN < item?.MARGEM_VENDA
                                                                                   && f.PERC_MAX > item?.MARGEM_VENDA
+                                                                                  &&  f.MEDIA_ACESSORIOS_MIN == null
+                                                                                  &&  f.TIPO_COMISSAO == item.TIPO
+                                                                              ).map(rf => {  
+                                                                         //  console.log(item)
+                                                                                 var dadosVendas  = {
+                                                                                  "CHASSI": item.CHASSI,                                                                                         
+                                                                                  "CPF": item.COD_CLIENTE,
+                                                                                  "DATA_VENDA": item.DATA_VENDA,
+                                                                                  "COD_EMPRESA": item.EMPRESA,
+                                                                                  "MES_VENDA": item.MES_VENDA,
+                                                                                  "NOME_CLIENTE": item.NOME_CLIENTE,
+                                                                                  "PROPOSTA": item.COD_PROPOSTA,
+                                                                                  "DESCRICAO_MODELO": item.DESCRICAO_MODELO,
+                                                                                  "COD_PROPOSTA": item.COD_PROPOSTA,
+                                                                                  "MARGEM_VENDA": item.MARGEM_VENDA,
+                                                                                  "TOTAL_VENDA": item.TOTAL_VENDA,
+                                                                                  "TIPO": item.TIPO,
+                                                                                  "QTDE": item.QTDE,
+                                                                                  "PERCENTUAL": rf.PERC,
+                                                                                  "COMISSAO": arredonda(item.TOTAL_VENDA * rf.PERC,2) ,
+                                                                                  "VENDEDOR":       usuario.NOME                                                                       
+                                                                                  } 
+                                                                              
+                                                                                  if(arrayfiltroGestorFaixa.filter(f => f.COD_PROPOSTA == item.COD_PROPOSTA ).length == 0){
+                                                                                   // console.log(dadosVendas)
+                                                                                   arrayfiltroGestorFaixa.push(dadosVendas) 
+                                                                                  }
+                                                                              })  
+
+                                                                    //faixa QTDE - NAO PREMIO
+                                                                    
+                                                              arrayRegras.filter(f =>  f.MES   == mes
+                                                                                  && f.COD_EMPRESA == usuario.COD_EMPRESA
+                                                                                  && f.COD_FUNCAO  == usuario.COD_FUNCAO
+                                                                                  && f.USA_FAIXA   == 'S'   
+                                                                                  && f.PREMIO   != 'S'                                                                                
+                                                                                  &&  f.QTDE_MIN  <= metaQtde 
+                                                                                  &&  f.QTDE_MAX  >= metaQtde 
                                                                                   &&  f.MEDIA_ACESSORIOS_MIN == null
                                                                                   &&  f.TIPO_COMISSAO == item.TIPO
                                                                               ).map(rf => {  
@@ -610,12 +736,56 @@ function comissaoSupervisor(arrayVendas,mes,usuario,meta,arrayRegras) {
                                                                                   } 
                                                                               
                                                                                   if(arrayfiltroGestorFaixa.filter(f => f.COD_PROPOSTA == item.COD_PROPOSTA ).length == 0){
-                                                                                   // console.log(dadosVendas)
+                                                                                    console.log(dadosVendas)
                                                                                    arrayfiltroGestorFaixa.push(dadosVendas) 
                                                                                   }
-                                                                              })                                              
+                                                                              })              
+                                                                        //faixa QTDE - COM PREMIO
+                                                               
+                                                          
 
-                                                          })    
+                                                              arrayRegras.filter(f =>  f.MES   == mes
+                                                                &&  f.COD_EMPRESA == usuario.COD_EMPRESA
+                                                                &&  f.COD_FUNCAO  == usuario.COD_FUNCAO
+                                                                &&  f.USA_FAIXA   == 'S'   
+                                                                &&  f.PREMIO   == 'S'                                                                                
+                                                                &&  f.QTDE_MIN  <= metaQtde 
+                                                                &&  f.QTDE_MAX  >= metaQtde 
+                                                                &&  f.MEDIA_ACESSORIOS_MIN == null
+                                                                &&  f.TIPO_COMISSAO == item.TIPO
+                                                            ).map(rf => {   
+                                                              const PREMIO  = { 
+                                                                "TOTAL_VENDA":    somaValor(arrayFiltro.filter(f => f.TIPO == rf.TIPO_COMISSAO && f.MES_VENDA   == mes).map(x => x.TOTAL_VENDA)),
+                                                                "QTDE":           metaQtde,
+                                                                "VENDEDOR":       usuario.NOME,
+                                                                "TIPO":           rf.TIPO_COMISSAO,
+                                                                "COMISSAO":       rf.VALOR * (bonusPerc || 1),
+                                                                "USA_FAIXA": 'S',
+                                                                "APELIDO": r.APELIDO,
+                                                                "BLOCO": "12",
+                                                                "ANALITICO": [{
+                                                                                "CHASSI": '% Bonus: '+bonusPerc,                                                                                                                                                                                                                                                        
+                                                                                "COD_EMPRESA": item.EMPRESA,
+                                                                                "MES_VENDA": item.MES_VENDA,
+                                                                                "NOME_CLIENTE": 'Vlr Bonus Integral:  '+rf.VALOR,
+                                                                                "PROPOSTA": item.COD_PROPOSTA,
+                                                                                "DESCRICAO_MODELO": 'Margem Media é '+metaMargem,                                                                                  
+                                                                                "TIPO": item.TIPO,
+                                                                                "QTDE": 1,
+                                                                                "VENDEDOR":       usuario.NOME                                                                       
+                                                                                } ]
+                                                                                } 
+                                                                              if (arrayGestor.filter(f=> f.TIPO == item.TIPO).length < 1){
+                                                                                arrayGestor.push(PREMIO)  
+                                                                              }             
+                                                                     
+                                                                } ) 
+                                                             
+                                                                              
+                                                          })
+
+                                                          
+                                                          
                                                           
 
                                         if(r.PREMIO=='S' && arrayGestor.filter(f => f.TIPO==r.TIPO_COMISSAO).length == 0){
@@ -673,6 +843,8 @@ function comissaoSupervisor(arrayVendas,mes,usuario,meta,arrayRegras) {
                                           })
 
                                           
+
+                                          
                                           arrayRegras.filter(f =>  f.MES   == mes
                                             && f.COD_EMPRESA == usuario.COD_EMPRESA
                                             && f.COD_FUNCAO  == usuario.COD_FUNCAO
@@ -693,9 +865,9 @@ function comissaoSupervisor(arrayVendas,mes,usuario,meta,arrayRegras) {
                                             "ANALITICO": arrayfiltroGestorFaixa.filter(f => f.TIPO == r.TIPO_COMISSAO && f.PERCENTUAL == r.PERC)
                                                             }              
                                                 arrayGestor.push(valorTotalDpto) 
-                                        })
-                                           
-  return arrayGestor.filter(f => f.COMISSAO != 0)
+                                        }) 
+   
+  return   arrayGestor.filter(f => f.COMISSAO != 0)
 }
 
 function qtdeVenda(valor){

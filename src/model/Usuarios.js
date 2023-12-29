@@ -15,7 +15,7 @@ const getLogin = async (usuario,response) => {
       response.status(500).send(`Ocorreu um ` + error) 
     }
     if (!error) 
-    schemaUsuario = results.rows[0]?.schema 
+    schemaUsuario = results.rows 
   })
 } 
 
