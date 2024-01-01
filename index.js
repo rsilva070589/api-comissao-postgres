@@ -3,8 +3,6 @@ const bodyParser = require('body-parser')
 const app = express()
 const usuarios = require('./src/model/Usuarios') 
 const acesso   = require('./src/model/Acesso') 
-const meta     = require('./src/model/integracaoMeta') 
-const venda    = require('./src/model/integracaoVendas') 
 const funcao    = require('./src/model/Funcoes') 
 const empresa    = require('./src/model/Empresas')
 const regra    = require('./src/model/RegraComissao')
@@ -34,15 +32,14 @@ app.get('/funcoes', funcao.getFuncoes)
 app.get('/empresas', empresa.getEmpresas)
  
 app.get('/regracomissao', regra.getRegras)
+app.post('/regracomissao', regra.create)
+app.put('/regracomissao/:id', regra.updateRegra)
+app.delete('/regracomissao/:id', regra.deleteRegra)
 
 app.post('/comissao', comissao.find)
  
 app.get('/acesso/:id', acesso.getLogin)
 
- 
- 
-
-console.log('pagina index' +acesso.usuarioLogado)
 
 app.listen(port, () => {
   console.log(`App running on port ${port}.`)
