@@ -24,8 +24,8 @@ app.get('/', (request, response) => {
 app.get('/usuarios', usuarios.getUsers)  
 app.get('/usuarios/:id', usuarios.getUsers)   
 app.post('/usuarios', usuarios.createUser)
-app.put('/usuarios/:id', usuarios.updateUser)
-app.delete('/usuarios/:id', usuarios.deleteUser)
+app.put('/usuarios', usuarios.updateUser)
+app.delete('/usuarios', usuarios.deleteUser)
 
 app.get('/funcoes', funcao.getFuncoes)
 

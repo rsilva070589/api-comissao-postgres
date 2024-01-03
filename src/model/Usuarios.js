@@ -58,39 +58,38 @@ const getUsers = async (request, response) => {
     response.status(500).send(`nao tem schema `) 
   }
   
-}
- 
+} 
 
 const createUser = (request, response) => {
-  const { CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE } = request.body
+  const { COD_EMPRESA, NOME_EMPRESA,COD_FUNCAO,FUNCAO,MES,NOME,NOME_COMPLETO,DPTO,GESTOR,MARCA,DIRETORIA,ANULAR,FERIAS,PERIODO_INI,PERIODO_FIM } = request.body
 
-  database.pool.query('INSERT INTO  "' +schemaUsuario+'".usuarios (CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE)  VALUES ($1, $2,$3,$4,$5,$6,$7,$8,$9) RETURNING *', 
-                [CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE],
+  database.pool.query('INSERT INTO  "' +schemaUsuario+'".usuarios ( "COD_EMPRESA", "NOME_EMPRESA","COD_FUNCAO","FUNCAO","MES","NOME","NOME_COMPLETO","DPTO","GESTOR","MARCA","DIRETORIA","ANULAR","FERIAS","PERIODO_INI","PERIODO_FIM")  VALUES ($1, $2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *', 
+                [COD_EMPRESA, NOME_EMPRESA,COD_FUNCAO,FUNCAO,MES,NOME,NOME_COMPLETO,DPTO,GESTOR,MARCA,DIRETORIA,ANULAR,FERIAS,PERIODO_INI,PERIODO_FIM],
                  (error, results) => {
     if (error) {             
-      console.log('produto nao cadastrado'+ NOME)
+      console.log(error) 
     }
     if (!error){
-      response.status(201).send(`Produto cadastrado: ${results.rows[0].CODIGO_BARRAS}`)
+      response.status(201).send(`Usuario cadastrado `)
     }
     
   })
 }
 
 const updateUser = (request, response) => {
-  const id = parseInt(request.params.id)  
-  const { CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE } = request.body
+   
+  const { COD_EMPRESA, NOME_EMPRESA,COD_FUNCAO,FUNCAO,NOME_COMPLETO,DPTO,GESTOR,MARCA,DIRETORIA,ANULAR,FERIAS,PERIODO_INI,PERIODO_FIM,NOME,MES } = request.body
 
   database.pool.query(
-    'UPDATE mercearia.produtos SET CATEGORIA = $1, CODIGO_BARRAS = $2,DESCRICAO = $3,FOTO = $4,NOME = $5,SITUACAO = $6,VALOR = $7,VALOR_CUSTO = $8,QTDE_ESTOQUE = $9 WHERE id = $10',
-    [CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE,id],
+    'UPDATE "' +schemaUsuario+'".usuarios SET "COD_EMPRESA" = $1, "NOME_EMPRESA" = $2,"COD_FUNCAO" = $3,"FUNCAO" = $4,"NOME_COMPLETO" = $5,"DPTO" = $6,"GESTOR" = $7,"MARCA" = $8,"DIRETORIA" = $9,"ANULAR"= $10,"FERIAS"= $11,"PERIODO_INI"= $12,"PERIODO_FIM"= $13 WHERE "NOME" = $14 and "MES" = $15',
+    [COD_EMPRESA, NOME_EMPRESA,COD_FUNCAO,FUNCAO,NOME_COMPLETO,DPTO,GESTOR,MARCA,DIRETORIA,ANULAR,FERIAS,PERIODO_INI,PERIODO_FIM,NOME,MES],
     (error, results) => {
       if (error) {
-        response.status(400).send(`Ocorreu um erro ao Atualizar o ID: ${id}`)
+        response.status(400).send(`Ocorreu um erro ao Atualizar o USUARIO`)
         throw error
       }
       if (!error){
-        response.status(200).send(`User modified with ID: ${id}`)
+        response.status(200).send(`User modified Sucesso`)
       } 
       
     }
@@ -98,14 +97,14 @@ const updateUser = (request, response) => {
 }
 
 const deleteUser = (request, response) => {
-  const id = parseInt(request.params.id)
+  const { NOME, MES} = request.body
 
-  database.pool.query('DELETE FROM  "' +schemaUsuario+'".usuarios WHERE id = $1', [id], (error, results) => {
+  database.pool.query('DELETE FROM  "' +schemaUsuario+'".usuarios WHERE "NOME" = $1 AND   "MES" = $2', [NOME, MES], (error, results) => {
     if (error) {
       throw error
     }
     if (!error){
-      response.status(200).send(`User modified with ID: ${id}`)
+      response.status(200).send(`DELETADO USUARIO ID: ${NOME}`)
     }     
   })
 }
