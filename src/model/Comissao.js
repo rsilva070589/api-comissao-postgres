@@ -102,15 +102,15 @@ async function getMeta(context,response) {
 
 async function getVendas(context,response) { 
   
-  context.COD_FUNCAO = arrayUsuarios[0].COD_FUNCAO
+  context.COD_FUNCAO = arrayUsuarios[0]?.COD_FUNCAO
   //console.log(arrayUsuarios[0].GESTOR)
 
-  if (arrayUsuarios[0].GESTOR > 0){
+  if (arrayUsuarios[0]?.GESTOR > 0){
     context.COD_EMPRESA = arrayUsuarios[0].GESTOR
     context.COLABORADOR = context.NOME
   }
 
-  if (arrayUsuarios[0].GESTOR == 'M'){
+  if (arrayUsuarios[0]?.GESTOR == 'M'){
     context.MARCA = arrayUsuarios[0].MARCA
     context.COLABORADOR = context.NOME
   } 
@@ -616,7 +616,7 @@ function comissaoSupervisor(arrayVendas,mes,usuario,meta,arrayRegras) {
                                             metaQtde = somaValorInteiro( vendas().filter(f => f.TIPO == r.TIPO_COMISSAO).map(x=> parseInt(x.QTDE)))
                                           //  somaMargem = somaValorInteiro( )
                                           ///  console.log(vendas().filter(f => f.TIPO == r.TIPO_COMISSAO).length)
-                                            metaMargem = Math.round(((somaValorInteiro(arrayMargens[0].map(x=> parseFloat(x.MARGEM_VENDA)))) / metaQtde), -2)
+                                            metaMargem = Math.round(((somaValorInteiro(arrayMargens[0]?.map(x=> parseFloat(x.MARGEM_VENDA)))) / metaQtde), -2)
                                             console.log(metaMargem)
                                             bonusPerc = arrayRegrasAux.filter(f =>  f.MES   == mes &&  f.COD_EMPRESA == usuario.COD_EMPRESA
                                               &&  f.PERC_MIN  <= metaMargem

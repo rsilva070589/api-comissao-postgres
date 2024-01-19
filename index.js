@@ -1,12 +1,18 @@
 const express = require('express')
 const bodyParser = require('body-parser')
-const app = express()
-const usuarios = require('./src/model/Usuarios') 
-const acesso   = require('./src/model/Acesso') 
+const app         = express()
+const usuarios  =  require('./src/model/Usuarios') 
+const acesso    = require('./src/model/Acesso') 
 const funcao    = require('./src/model/Funcoes') 
 const empresa    = require('./src/model/Empresas')
 const regra    = require('./src/model/RegraComissao')
 const comissao    = require('./src/model/Comissao')
+
+const Produtos       = require('./src/model/pdv/Produtos') 
+const formaspagamento = require('./src/model/pdv/FormasPagamento') 
+const categorias = require('./src/model/pdv/Categorias') 
+const vendas = require('./src/model/pdv/Vendas') 
+
 const port = 4141
 var cors = require('cors');
 
@@ -20,6 +26,30 @@ app.use(
 app.get('/', (request, response) => {
   response.json({ info: 'Node.js, Express, and Postgres API' })
 })
+
+app.post('/getProdutos', Produtos.getAll)  
+app.get('/Produtos/:id', Produtos.getId)   
+app.post('/Produtos', Produtos.create)
+app.put('/Produtos', Produtos.update)
+app.delete('/Produtos', Produtos.deleteId)
+
+
+app.post('/GetFormapagamento', formaspagamento.getAll)  
+app.get('/formapagamento/:id', formaspagamento.getId)   
+app.post('/formapagamento', formaspagamento.create)
+app.put('/formapagamento', formaspagamento.update)
+app.delete('/formapagamento', formaspagamento.deleteId)
+
+app.post('/getCategorias', categorias.getAll)   
+app.post('/categorias', categorias.create)
+app.put('/categorias', categorias.update)
+app.delete('/categorias', categorias.deleteId)
+
+app.post('/relvendas', vendas.getAll)  
+app.get('/vendas/:id', vendas.getId)   
+app.post('/vendas', vendas.create)
+app.put('/vendas', vendas.update)
+app.delete('/vendas', vendas.deleteId)
 
 app.get('/usuarios', usuarios.getUsers)  
 app.get('/usuarios/:id', usuarios.getUsers)   
@@ -38,7 +68,7 @@ app.delete('/regracomissao/:id', regra.deleteRegra)
 
 app.post('/comissao', comissao.find)
  
-app.get('/acesso/:id', acesso.getLogin)
+app.post('/acesso', acesso.getLogin)
 
 
 app.listen(port, () => {
