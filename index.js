@@ -50,6 +50,7 @@ app.get('/vendas/:id', vendas.getId)
 app.post('/vendas', vendas.create)
 app.put('/vendas', vendas.update)
 app.delete('/vendas', vendas.deleteId)
+app.post('/periodovendas', vendas.getId)
 
 app.get('/usuarios', usuarios.getUsers)  
 app.get('/usuarios/:id', usuarios.getUsers)   

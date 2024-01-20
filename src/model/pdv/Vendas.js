@@ -26,10 +26,15 @@ const getAll = (request, response) => {
    "`+schemaUsuario+`".produtos p,
    "`+schemaUsuario+`".categorias c,
    "`+schemaUsuario+`".formaspagamento f
-  WHERE v.id = vi.id AND vi.cod_produto::text = p.codigo_barras::text AND p.categoria = c.id AND v.forma_pgto = f.id;
+  WHERE v.id = vi.id 
+  AND vi.cod_produto::text = p.codigo_barras::text 
+  AND p.categoria = c.id 
+  AND v.forma_pgto = f.id
+  and to_char(v.data::timestamp with time zone, 'MM/YYYY'::text) >= $1
+  order by v.id desc;
 `
- 
-  database.pool.query(sqlVendasLucro, (error, results) => {
+ console.log(request.body.MES)
+  database.pool.query(sqlVendasLucro,[request.body.MES], (error, results) => {
     if (error) {
       response.status(500).send(`Ocorreu um ` + error) 
     }
@@ -40,13 +45,14 @@ const getAll = (request, response) => {
 }
 
 const getId = (request, response) => {
+  schemaUsuario = request.body.SCHEMA
     const context = {} 
     context.dataIni = (request.body.DATAINI)
     context.dataFim = (request.body.DATAFIM)
 
     console.log(request.body)
 
-  database.pool.query(`SELECT * FROM mercearia.vendas WHERE DATA >= to_date($1,'dd/mm/yyyy') and DATA <= to_date($2,'dd/mm/yyyy') ` , 
+  database.pool.query(`SELECT * FROM "`+schemaUsuario+`".VENDAS  WHERE DATA >= to_date($1,'dd/mm/yyyy') and DATA <= to_date($2,'dd/mm/yyyy') ` , 
       [context.dataIni,context.dataFim], (error, results) => {
     if (error) {
       response.status(400).send(`Ocorreu um erro ao buscar Registros`)
@@ -128,6 +134,7 @@ const create = async (request, response) => {
   
 
 const update= (request, response) => {
+  schemaUsuario = request.body.SCHEMA
   const id = parseInt(request.params.id)  
   const { CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE } = request.body
 
@@ -148,16 +155,17 @@ const update= (request, response) => {
 }
 
 const deleteId = (request, response) => {
-  const id = parseInt(request.params.id)
+  schemaUsuario = request.body.SCHEMA
+  const id = request.body.ID
 
-  database.pool.query('DELETE FROM mercearia.vendas_itens WHERE id = $1', [id])
+  database.pool.query('DELETE FROM "'+schemaUsuario+'".vendas_itens WHERE id = $1', [id])
 
-  database.pool.query('DELETE FROM mercearia.vendas WHERE id = $1', [id], (error, results) => {
+  database.pool.query('DELETE FROM "'+schemaUsuario+'".vendas WHERE id = $1', [id], (error, results) => {
     if (error) {
       throw error
     }
     if (!error){
-      response.status(200).send(`Vendas modified with ID: ${id}`)
+      response.status(200).send(` Delete Venda with ID: ${id}`)
     }     
   })
 }
