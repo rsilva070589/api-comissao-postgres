@@ -1,5 +1,17 @@
 const database = require('../../../config/database.js') 
  
+const options = { timeZone: 'America/Sao_Paulo' };
+ 
+
+function dataFormatada(d){ 
+  var data =  new Date(d),
+      dia  = data.getDate().toString(),
+      diaF = (dia.length == 1) ? '0'+dia : dia,
+      mes  = (data.getMonth()+1).toString(), //+1 pois no getMonth Janeiro começa com zero.
+      mesF = (mes.length == 1) ? '0'+mes : mes,
+      anoF = data.getFullYear();
+  return anoF+"/"+mesF+"/"+diaF;
+  }
 
 const getAll = (request, response) => {
 
@@ -33,16 +45,34 @@ const getAll = (request, response) => {
   and to_char(v.data::timestamp with time zone, 'MM/YYYY'::text) >= $1
   order by v.id desc;
 `
- console.log(request.body.MES)
-  database.pool.query(sqlVendasLucro,[request.body.MES], (error, results) => {
-    if (error) {
-      response.status(500).send(`Ocorreu um ` + error) 
-    }
-    if (!error)
-    response.status(200).json(results.rows) 
- 
-  })
+sqlCorrigeHorario = `update "`+schemaUsuario+`".vendas set data = $1 where data > $1`
+  
+
+database.pool.query(sqlCorrigeHorario, [dataFormatada(new Date())],(error, results) => {
+  if (error) {
+    response.status(500).send(`Ocorreu um ` + error) 
+  }
+  if (!error){ 
+    console.log('sucesso Rotina Ajuste horario')
+
+        database.pool.query(sqlVendasLucro,[request.body.MES], (error, results) => {
+      if (error) {
+        response.status(500).send(`Ocorreu um ` + error) 
+      }
+      if (!error){        
+        response.status(200).json(results.rows) 
+      }     
+    })
+  }     
+})
+
+console.log(request.body.MES)
+
+
 }
+
+
+
 
 const getId = (request, response) => {
   schemaUsuario = request.body.SCHEMA

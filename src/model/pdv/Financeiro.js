@@ -3,7 +3,7 @@ const database = require('../../../config/database.js')
 
 
 const get = (request, response) => {
-  database.pool.query('SELECT * FROM mercearia.vw_fluxo_financeiro ORDER BY id desc', (error, results) => {
+  database.pool.query(`SELECT "`+schemaUsuario+`".vw_fluxo_financeiro ORDER BY id desc`, (error, results) => {
     if (error) {
       response.status(500).send(`Ocorreu um ` + error) 
     }
@@ -14,7 +14,7 @@ const get = (request, response) => {
 }
 
 const getById = (request, response) => {
-    const query = `SELECT * FROM mercearia.vw_fluxo_financeiro  x
+    const query = `SELECT * FROM "`+schemaUsuario+`".vw_fluxo_financeiro  x
                     WHERE x.DATA >= to_date($1,'dd/mm/yyyy') 
                       and x.DATA <= to_date($2,'dd/mm/yyyy') 
                       order by x.ID`

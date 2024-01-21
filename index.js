@@ -12,6 +12,7 @@ const Produtos       = require('./src/model/pdv/Produtos')
 const formaspagamento = require('./src/model/pdv/FormasPagamento') 
 const categorias = require('./src/model/pdv/Categorias') 
 const vendas = require('./src/model/pdv/Vendas') 
+const demanda = require('./src/model/pdv/Demanda') 
 
 const port = 4141
 var cors = require('cors');
@@ -26,6 +27,9 @@ app.use(
 app.get('/', (request, response) => {
   response.json({ info: 'Node.js, Express, and Postgres API' })
 })
+
+
+app.post('/demanda', demanda.get)
 
 app.post('/getProdutos', Produtos.getAll)  
 app.get('/Produtos/:id', Produtos.getId)   
