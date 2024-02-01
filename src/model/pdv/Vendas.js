@@ -42,7 +42,7 @@ const getAll = (request, response) => {
   AND vi.cod_produto::text = p.codigo_barras::text 
   AND p.categoria = c.id 
   AND v.forma_pgto = f.id
-  and to_char(v.data::timestamp with time zone, 'MM/YYYY'::text) >= $1
+  and to_char(v.data::timestamp with time zone, 'MM/YYYY'::text) = $1
   order by v.id desc;
 `
 sqlCorrigeHorario = `update "`+schemaUsuario+`".vendas set data = $1 where data > $1`

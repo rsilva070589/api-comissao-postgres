@@ -1,4 +1,7 @@
 const express = require('express')
+const https = require('https')
+const fs = require('fs')
+
 const bodyParser = require('body-parser')
 const app         = express()
 const usuarios  =  require('./src/model/Usuarios') 
@@ -14,6 +17,7 @@ const categorias = require('./src/model/pdv/Categorias')
 const vendas = require('./src/model/pdv/Vendas') 
 const demanda = require('./src/model/pdv/Demanda') 
 
+
 const port = 4141
 var cors = require('cors');
 
@@ -24,8 +28,10 @@ app.use(
   })
 )
 
-app.get('/', (request, response) => {
-  response.json({ info: 'Node.js, Express, and Postgres API' })
+
+
+app.get('/', (request, response) => { 
+  response.send({ result: 'Bem Vindo a Api Postgres'}) 
 })
 
 
@@ -76,6 +82,10 @@ app.post('/comissao', comissao.find)
 app.post('/acesso', acesso.getLogin)
 
 
-app.listen(port, () => {
-  console.log(`App running on port ${port}.`)
-})
+//app.listen(port, () => {  console.log(`App running on port ${port}.`)})
+
+
+https.createServer({
+  key: fs.readFileSync('certificado/private.key'),
+  cert: fs.readFileSync('certificado/certificate.crt')
+}, app).listen(port, () => {  console.log(`App running on port ${port}.`)})
