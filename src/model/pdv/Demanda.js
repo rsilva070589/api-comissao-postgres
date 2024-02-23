@@ -4,47 +4,33 @@ const database = require('../../../config/database.js')
 const get = (request, response) => {
   schemaUsuario = request.body.SCHEMA
 queryDemanda = 
-`
-SELECT p.codigo_barras,
-    p.nome,
-    p.qtde_estoque,
-    ( SELECT sum(vi.qtde) AS qtde_vendas
-           FROM "`+schemaUsuario+`".vendas v,
-           "`+schemaUsuario+`".vendas_itens vi
-          WHERE v.id = vi.id AND v.data > (CURRENT_DATE - 30) AND v.tipo_venda::text = 'NORMAL'::text AND vi.cod_produto::text = p.codigo_barras::text
-          GROUP BY vi.cod_produto) AS qtde_vendas,
-    'PROXIMO-ACABAR'::text AS tipo
-   FROM "`+schemaUsuario+`".produtos p
-  WHERE p.qtde_estoque > 0 AND p.qtde_estoque < (( SELECT sum(vi.qtde) / 3 AS qtde_vendas
-           FROM "`+schemaUsuario+`".vendas v,
-           "`+schemaUsuario+`".vendas_itens vi
-          WHERE v.id = vi.id AND v.data > (CURRENT_DATE - 30) AND vi.cod_produto::text = p.codigo_barras::text AND v.tipo_venda::text = 'NORMAL'::text
-          GROUP BY vi.cod_produto)) AND (p.situacao::text = ANY (ARRAY['ATIVADO'::character varying::text, 'ATIVO'::character varying::text])) AND (p.codigo_barras::text IN ( SELECT vi.cod_produto
-           FROM "`+schemaUsuario+`".vendas v,
-           "`+schemaUsuario+`".vendas_itens vi
-          WHERE v.id = vi.id AND v.tipo_venda::text = 'NORMAL'::text AND v.data > (CURRENT_DATE - 30))) AND NOT (p.codigo_barras::text IN ( SELECT p2.codigo_barras
-           FROM "`+schemaUsuario+`".produtos p2
-          WHERE p2.codigo_barras::text ~~ 'PIX%'::text))
-
-  union all
-  
-  SELECT p.codigo_barras,
-  p.nome,
-  p.qtde_estoque,
-  ( SELECT sum(vi.qtde) AS qtde_vendas
-         FROM "`+schemaUsuario+`".vendas v,
-         "`+schemaUsuario+`".vendas_itens vi
-        WHERE v.id = vi.id AND v.data > (CURRENT_DATE - 30) AND v.tipo_venda::text = 'NORMAL'::text AND vi.cod_produto::text = p.codigo_barras::text
-        GROUP BY vi.cod_produto) AS qtde_vendas,
-  'ITENS-ZERADOS'::text AS tipo
- FROM "`+schemaUsuario+`".produtos p
-WHERE p.qtde_estoque < 1 AND (p.situacao::text = ANY (ARRAY['ATIVADO'::character varying, 'ATIVO'::character varying]::text[])) AND (p.codigo_barras::text IN ( SELECT vi.cod_produto
-         FROM "`+schemaUsuario+`".vendas v,
-         "`+schemaUsuario+`".vendas_itens vi
-        WHERE v.id = vi.id AND v.data > (CURRENT_DATE - 30) AND v.tipo_venda::text = 'NORMAL'::text)) AND NOT (p.codigo_barras::text IN ( SELECT p2.codigo_barras
-         FROM "`+schemaUsuario+`".produtos p2
-        WHERE p2.codigo_barras::text ~~ 'PIX%'::text))
-ORDER BY 2;
+` 
+  select * from (
+    select 
+      p.nome, 
+      p.id,
+      p.codigo_barras,
+      p.qtde_estoque,
+      count(*) as qtde_vendas,
+      CASE   
+      WHEN p.qtde_estoque < 1 then 'ITENS-ZERADOS'
+      ELSE  'PROXIMO-ACABAR'
+      END  
+      as TIPO
+    from 
+    "`+schemaUsuario+`".vendas v,
+    "`+schemaUsuario+`".vendas_itens vi,
+    "`+schemaUsuario+`".produtos   p,
+    "`+schemaUsuario+`".categorias c
+    where 
+      v.id = vi.id 
+    and v."data" > 	(CURRENT_DATE - 30)
+    AND v.tipo_venda = 'NORMAL'
+    and vi.id_produto = p.id 
+    and p.categoria  = c.id 	 
+    and c.descricao <> 'Servicos'  
+    group by p.nome,p.id,p.codigo_barras ,p.qtde_estoque )
+    where qtde_estoque < qtde_vendas / 3  
 `
 
 

@@ -28,6 +28,7 @@ app.use(
   })
 )
 
+console.log(process.env.DB_HOST)
 
 
 app.get('/', (request, response) => { 
@@ -84,8 +85,13 @@ app.post('/acesso', acesso.getLogin)
 
 //app.listen(port, () => {  console.log(`App running on port ${port}.`)})
 
-
+/** 
 https.createServer({
   key: fs.readFileSync('certificado/private.key'),
   cert: fs.readFileSync('certificado/certificate.crt')
 }, app).listen(port, () => {  console.log(`App running on port ${port}.`)})
+*/
+
+app.listen(port, () => {
+  console.log(`App running on port ${port}.`)
+})
