@@ -124,11 +124,13 @@ const create = async (request, response) => {
   }
   postVenda ()
 
-  function postVendaItens(codItem,qtde, valor,desconto,custo) {
+ 
+  function postVendaItens(codItem,qtde, valor,desconto,custo,id_produto) {
     
-    const parmVendaItens = [ seqVenda,codItem,qtde, valor,desconto,custo]
     
-    const sqlInsertVendaItens = 'INSERT INTO "'+schemaUsuario+'".vendas_itens (id, cod_produto, qtde, valor, desconto, custo) VALUES($1,$2,$3,$4,$5,$6)'
+    const parmVendaItens = [ seqVenda,codItem,qtde, valor,desconto,custo,id_produto]
+    
+    const sqlInsertVendaItens = 'INSERT INTO "'+schemaUsuario+'".vendas_itens (id, cod_produto, qtde, valor, desconto, custo, id_produto) VALUES($1,$2,$3,$4,$5,$6,$7)'
                                           
   
     database.pool.query(sqlInsertVendaItens,parmVendaItens,(error, results) => {
@@ -137,27 +139,30 @@ const create = async (request, response) => {
       }
       if (!error){  
         console.log(`Itens ${codItem} Cadastrado para a venda ${seqVenda} com Sucesso` ) 
-        updateItensQtde(codItem, qtde) 
+        updateItensQtde(qtde,id_produto ) 
       }   
     })
   }
   
- async function updateItensQtde(cod_produto,qtde) {    
+ async function updateItensQtde(qtde,id_produto) { 
   
-    const sqlUpdateQtdeItens = 'UPDATE "'+schemaUsuario+'".produtos SET qtde_estoque=qtde_estoque - $1 where codigo_barras = $2'
-    database.pool.query(sqlUpdateQtdeItens,[qtde,cod_produto],(error, results) => {
+  console.log('id do produto é: ' + id_produto)
+    const sqlUpdateQtdeItens = 'UPDATE "'+schemaUsuario+'".produtos SET qtde_estoque=qtde_estoque - $1 where id= $2'
+    database.pool.query(sqlUpdateQtdeItens,[qtde,id_produto],(error, results) => {
       if (error) {      
         throw error
+        console.log(`Item ID ${id_produto} error` )       
       }
       if (!error){  
-        console.log(`Item ${cod_produto} diminuiu ${qtde} do estoque` )        
+        console.log(`Item ID ${id_produto} diminuiu ${qtde} do estoque` )        
       }   
     })
   }
- 
+ console.log(request.body.ITENS)
+
   request.body.ITENS.map(  x => {
     const itens = Object.assign({}, x);  
-    postVendaItens(itens.COD_PRODUTO,itens.QTDE, itens.VALOR, itens.DESCONTO, itens.CUSTO)   
+    postVendaItens(itens.COD_PRODUTO,itens.QTDE, itens.VALOR, itens.DESCONTO, itens.CUSTO,itens.ID_PRODUTO)
   }) 
 }
 
@@ -169,7 +174,7 @@ const update= (request, response) => {
   const { CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE } = request.body
 
   database.pool.query(
-    'UPDATE mercearia.vendas SET CATEGORIA = $1, CODIGO_BARRAS = $2,DESCRICAO = $3,FOTO = $4,NOME = $5,SITUACAO = $6,VALOR = $7,VALOR_CUSTO = $8,QTDE_ESTOQUE = $9 WHERE id = $10',
+    'UPDATE "'+schemaUsuario+'".vendas SET CATEGORIA = $1, CODIGO_BARRAS = $2,DESCRICAO = $3,FOTO = $4,NOME = $5,SITUACAO = $6,VALOR = $7,VALOR_CUSTO = $8,QTDE_ESTOQUE = $9 WHERE id = $10',
     [CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE,id],
     (error, results) => {
       if (error) {

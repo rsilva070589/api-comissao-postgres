@@ -29,8 +29,9 @@ queryDemanda =
     and vi.id_produto = p.id 
     and p.categoria  = c.id 	 
     and c.descricao <> 'Servicos'  
+    and p.situacao ='ATIVADO'
     group by p.nome,p.id,p.codigo_barras ,p.qtde_estoque )
-    where qtde_estoque < qtde_vendas / 3  
+    where qtde_estoque <= qtde_vendas / 3  
 `
 
 
