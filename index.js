@@ -62,6 +62,8 @@ app.post('/vendas', vendas.create)
 app.put('/vendas', vendas.update)
 app.delete('/vendas', vendas.deleteId)
 app.post('/periodovendas', vendas.getId)
+app.post('/dashboard', vendas.getDasdboard)
+ 
 
 app.get('/usuarios', usuarios.getUsers)  
 app.get('/usuarios/:id', usuarios.getUsers)   
@@ -85,16 +87,15 @@ app.post('/acesso', acesso.getLogin)
 
 //app.listen(port, () => {  console.log(`App running on port ${port}.`)})
 
- /** 
+ /**
 https.createServer({
   key: fs.readFileSync('certificado/private.key'),
   cert: fs.readFileSync('certificado/certificate.crt')
 }, app).listen(port, () => {  console.log(`App running on port ${port}.`)})
-   */
 
+  */ 
 
  
 app.listen(port, () => {
   console.log(`App running on port ${port}.`)
 })
- 

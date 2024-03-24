@@ -57,7 +57,7 @@ const getAll = (request, response) => {
      "`+schemaUsuario+`".formaspagamento f,
      "`+schemaUsuario+`".vendas_pagamento vp
     WHERE v.id = vi.id 
-    AND vi.cod_produto::text = p.codigo_barras::text 
+    AND vi.id_produto =  p.id  
     AND p.categoria = c.id  
     and to_char(v.data::timestamp with time zone, 'MM/YYYY'::text) = $1
     and v.id = vp.id_venda
@@ -157,6 +157,73 @@ const getId = (request, response) => {
         arrayVendasPeriodo.push(data)
       })
       response.status(200).json(arrayVendasPeriodo)  }
+  })?.then(x => x)
+}
+const getDasdboard = (request, response) => {
+  schemaUsuario = request.body.SCHEMA
+    const context = {} 
+    context.dataIni = (request.body.DATAINI)
+    context.dataFim = (request.body.DATAFIM)
+
+    const arrayVendasPeriodo = []
+
+    console.log(request.body)
+
+    var itensVenda = null
+ 
+   
+
+  database.pool.query(`  
+  select 
+  id,
+  data,  
+  valor, 
+  sum(a.valor1 - a.custo) as lucro, 
+  tipo_venda
+  from
+  (SELECT v.id,
+      vp.valor * 100 / v.valor as perc,
+      to_char(v.data::timestamp with time zone, 'DD/MM/YYYY'::text) AS data,
+      to_char(v.data::timestamp with time zone, 'MM/YYYY'::text) AS mes,
+      vi.cod_produto,
+      p.nome,
+      vi.qtde,
+      v.valor as valor_bruto,
+      (vi.valor ) - vi.desconto AS valor,
+      (vi.valor  - vi.desconto  - (f.taxa / 100::numeric)::double precision) * (vp.valor * 100 / v.valor) /100  AS valor1,
+      vi.custo * (vp.valor * 100 / v.valor) /100 as custo,        
+      c.descricao AS categoria,
+      f.descricao AS forma_pgto,
+      v.tipo_venda
+     FROM 
+     "`+schemaUsuario+`".vendas v, 
+     (select vi.id,vi.cod_produto, sum(vi.qtde) qtde, sum(vi.valor) valor, sum(vi.desconto) desconto,sum(vi.custo)custo,vi.id_produto 
+     from "`+schemaUsuario+`".vendas_itens vi      
+     group by vi.id,vi.cod_produto,vi.qtde,vi.valor,vi.desconto,vi.custo,vi.id_produto) vi,
+     "`+schemaUsuario+`".produtos p,
+     "`+schemaUsuario+`".categorias c,
+     "`+schemaUsuario+`".formaspagamento f,
+     "`+schemaUsuario+`".vendas_pagamento vp
+    WHERE v.id = vi.id 
+    AND vi.id_produto =  p.id  
+    AND p.categoria = c.id  
+    and DATA >= to_date($1,'dd/mm/yyyy') 
+    and DATA <= to_date($2,'dd/mm/yyyy')
+    and v.id = vp.id_venda
+    and f.id = vp.cod_forma_pgto   
+    
+    )  a  
+    group by a.id,data,mes ,a.nome, a.qtde,a.cod_produto, categoria, 
+      tipo_venda,valor
+      order by id desc
+  ` , 
+      [context.dataIni,context.dataFim], (error, results) => {
+    if (error) {
+      response.status(400).send(`Ocorreu um erro ao buscar Registros`)
+      throw error
+    }
+    if (!error){ 
+      response.status(200).json(results.rows)  }
   })?.then(x => x)
 }
 
@@ -332,6 +399,7 @@ function somaValor(array) {
 module.exports = {
   getAll,
   getId,
+  getDasdboard,
   create,
   update,
   deleteId,
