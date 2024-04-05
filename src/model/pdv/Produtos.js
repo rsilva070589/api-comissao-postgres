@@ -5,7 +5,7 @@ require('dotenv').config()
 
 const getAll = (request, response) => {
   let schemaUsuario =  request.body.SCHEMA
-  queryProdutos = 'SELECT c.descricao AS categoria,  c.id AS id_categoria,  p.codigo_barras,  p.descricao,  p.foto,  p.nome,  p.situacao,  p.valor,  p.valor_custo,  p.qtde_estoque,  p.id FROM "' +schemaUsuario+'".produtos p,  "' +schemaUsuario+'".categorias c WHERE p.categoria = c.id;'
+  queryProdutos = 'SELECT c.descricao AS categoria,  c.id AS id_categoria,  p.codigo_barras,  p.descricao,  p.foto,  p.nome,  p.situacao,  p.valor,  p.valor_custo,  p.qtde_estoque,  p.id,p.COD_FORNECEDOR,f.descricao as fornecedor FROM "' +schemaUsuario+'".produtos p,  "' +schemaUsuario+'".categorias c  ,  "' +schemaUsuario+'".fornecedores f WHERE p.categoria = c.id and p.cod_fornecedor=f.cod_fornecedor'
   database.pool.query(queryProdutos, (error, results) => {
     if (error) {
       response.status(500).send(`Ocorreu um ` + error) 
@@ -32,10 +32,10 @@ const getId = (request, response) => {
 
 const create = (request, response) => {
   let schemaUsuario =  request.body.SCHEMA
-  const { CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE } = request.body
+  const { CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE,COD_FORNECEDOR } = request.body
 
-  database.pool.query('INSERT INTO "' +schemaUsuario+'".produtos (CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE)  VALUES ($1, $2,$3,$4,$5,$6,$7,$8,$9) RETURNING *', 
-                [CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE],
+  database.pool.query('INSERT INTO "' +schemaUsuario+'".produtos (CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE,COD_FORNECEDOR)  VALUES ($1, $2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *', 
+                [CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE,COD_FORNECEDOR],
                  (error, results) => {
     if (error) {             
       console.log('produto nao cadastrado'+ NOME)
@@ -50,11 +50,11 @@ const create = (request, response) => {
 const update = (request, response) => {
   let schemaUsuario =  request.body.SCHEMA
   const id = parseInt(request.body.ID)  
-  const { CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE } = request.body
+  const { CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE,COD_FORNECEDOR } = request.body
 
   database.pool.query(
-    'UPDATE "' +schemaUsuario+'".produtos SET CATEGORIA = $1, CODIGO_BARRAS = $2,DESCRICAO = $3,FOTO = $4,NOME = $5,SITUACAO = $6,VALOR = $7,VALOR_CUSTO = $8,QTDE_ESTOQUE = $9 WHERE id = $10',
-    [CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE,id],
+    'UPDATE "' +schemaUsuario+'".produtos SET CATEGORIA = $1, CODIGO_BARRAS = $2,DESCRICAO = $3,FOTO = $4,NOME = $5,SITUACAO = $6,VALOR = $7,VALOR_CUSTO = $8,QTDE_ESTOQUE = $9,COD_FORNECEDOR = $10 WHERE id = $11',
+    [CATEGORIA, CODIGO_BARRAS,DESCRICAO,FOTO,NOME,SITUACAO,VALOR,VALOR_CUSTO,QTDE_ESTOQUE,COD_FORNECEDOR,id],
     (error, results) => {
       if (error) {
         response.status(400).send(`Ocorreu um erro ao Atualizar o ID: ${id}`)

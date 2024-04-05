@@ -14,6 +14,7 @@ const comissao    = require('./src/model/Comissao')
 const Produtos       = require('./src/model/pdv/Produtos') 
 const formaspagamento = require('./src/model/pdv/FormasPagamento') 
 const categorias = require('./src/model/pdv/Categorias') 
+const fornecedores = require('./src/model/pdv/Fornecedores') 
 const vendas = require('./src/model/pdv/Vendas') 
 const demanda = require('./src/model/pdv/Demanda') 
 
@@ -34,6 +35,8 @@ console.log(process.env.DB_HOST)
 app.get('/', (request, response) => { 
   response.send({ result: 'Bem Vindo a Api Postgres'}) 
 })
+
+app.post('/fornecedores', fornecedores.getAll)
 
 
 app.post('/demanda', demanda.get)
