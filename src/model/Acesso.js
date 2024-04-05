@@ -4,9 +4,9 @@ const database = require('../../config/database.js')
  
 const getLogin = async (request, response) => {    
 
-    const usuario = request.body.USUARIO.toUpperCase()
-    const schema  = request.body.SCHEMA.toUpperCase()
-    const senha   = request.body.SENHA.toUpperCase() 
+    const usuario = request.body.USUARIO
+    const schema  = request.body.SCHEMA
+    const senha   = request.body.SENHA
   var acessos_usuario = []
 
      queryLogin = `
