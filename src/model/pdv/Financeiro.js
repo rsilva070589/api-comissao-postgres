@@ -14,17 +14,30 @@ const get = (request, response) => {
 }
 
 const getById = (request, response) => {
-    const query = `SELECT * FROM "`+schemaUsuario+`".vw_fluxo_financeiro  x
-                    WHERE x.DATA >= to_date($1,'dd/mm/yyyy') 
-                      and x.DATA <= to_date($2,'dd/mm/yyyy') 
-                      order by x.ID`
+  let schemaUsuario =  request.body.SCHEMA
+    const query = `SELECT f.id,
+                            f.data,
+                            fc.descricao AS conta,
+                            fo.descricao AS origem,
+                            ff.descricao AS finalidade,
+                            f.obs,
+                            f.valor,
+                            ff.credito_debito
+                          FROM "`+schemaUsuario+`".fluxo_financeiro f,
+                          "`+schemaUsuario+`".fluxo_finalidade ff,
+                          "`+schemaUsuario+`".fluxo_origem fo,
+                          "`+schemaUsuario+`".fluxo_conta fc
+                          WHERE f.finalidade = ff.id AND f.origem = fo.id 
+                            AND f.conta = fc.id
+                          and f.DATA >= to_date($1,'dd/mm/yyyy') 
+                          and f.DATA <= to_date($2,'dd/mm/yyyy') 
+                          order by f.ID`
+                      
+
     const context = {} 
     context.dataIni = (request.body.DATAINI)
     context.dataFim = (request.body.DATAFIM)
-
-
     console.log(request.body)
-
   database.pool.query( query, [context.dataIni,context.dataFim], (error, results) => {
     if (error) {
       response.status(400).send(`Ocorreu um erro ao buscar Registros`)
@@ -38,16 +51,13 @@ const getById = (request, response) => {
 const create = async (request, response) => {
  
   let seqVenda = 0
-  const SqlSeqVenda= ` select nextval('mercearia.seq_fluxo_financeiro')   `  
-  await database.pool.query(SqlSeqVenda).then(x => {seqVenda=x.rows[0].nextval})
-
-
- 
+  const SqlSeqVenda= ` select nextval('"`+schemaUsuario+`".seq_fluxo_financeiro')   `  
+  await database.pool.query(SqlSeqVenda).then(x => {seqVenda=x.rows[0].nextval}) 
     console.log(`Registrando a venda:  ${seqVenda}`)
     
     const { DATA, CONTA,ORIGEM,FINALIDADE,OBS,VALOR } = request.body
 
-    const sqlInsertVenda = `INSERT INTO mercearia.fluxo_financeiro
+    const sqlInsertVenda = `INSERT INTO "`+schemaUsuario+`".fluxo_financeiro
     (id, data, conta, origem, finalidade, obs, valor)
     VALUES($1,$2,$3,$4,$5,$6,$7)`
     const parmVenda = [seqVenda,DATA, CONTA,ORIGEM,FINALIDADE,OBS,VALOR]                          
@@ -70,7 +80,7 @@ const update = (request, response) => {
 
 
   database.pool.query(
-    `UPDATE mercearia.fluxo_financeiro SET DATA = to_date($1,'dd/mm/yyyy'), CONTA = $2,ORIGEM = $3,FINALIDADE = $4,OBS = $5,VALOR = $6  WHERE id = $7`,
+    `UPDATE "`+schemaUsuario+`".fluxo_financeiro SET DATA = to_date($1,'dd/mm/yyyy'), CONTA = $2,ORIGEM = $3,FINALIDADE = $4,OBS = $5,VALOR = $6  WHERE id = $7`,
     [DATA, CONTA,ORIGEM,FINALIDADE,OBS,VALOR,id],
     (error, results) => {
       if (error) {
@@ -88,7 +98,7 @@ const update = (request, response) => {
 const deleteId = (request, response) => {
   const id = parseInt(request.params.id)
 
-  database.pool.query('DELETE FROM mercearia.fluxo_financeiro WHERE id = $1', [id], (error, results) => {
+  database.pool.query(`DELETE FROM "`+schemaUsuario+`".fluxo_financeiro WHERE id = $1`, [id], (error, results) => {
     if (error) {
       throw error
     }

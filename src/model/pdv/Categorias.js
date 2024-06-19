@@ -5,7 +5,7 @@ require('dotenv').config()
 
 const getAll = (request, response) => {
   schemaUsuario = request.body.SCHEMA
-  queryGetAll = 'SELECT * from "' +schemaUsuario+'".categorias ;'
+  queryGetAll = 'SELECT * from "' +schemaUsuario+'".vw_categorias ;'
   database.pool.query(queryGetAll, (error, results) => {
     if (error) {
       response.status(500).send(`Ocorreu um ` + error) 

@@ -11,7 +11,7 @@ queryDemanda =
       p.id,
       p.codigo_barras,
       p.qtde_estoque,
-      count(*) as qtde_vendas,
+      sum(vi.qtde) as qtde_vendas,
       CASE   
       WHEN p.qtde_estoque < 1 then 'ITENS-ZERADOS'
       ELSE  'PROXIMO-ACABAR'

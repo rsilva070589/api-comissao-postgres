@@ -18,6 +18,8 @@ const fornecedores = require('./src/model/pdv/Fornecedores')
 const vendas = require('./src/model/pdv/Vendas') 
 const demanda = require('./src/model/pdv/Demanda') 
 
+const Financiero = require('./src/model/pdv/Financeiro')
+
 
 const port = 4141
 var cors = require('cors');
@@ -35,6 +37,8 @@ console.log(process.env.DB_HOST)
 app.get('/', (request, response) => { 
   response.send({ result: 'Bem Vindo a Api Postgres'}) 
 })
+
+
 
 app.post('/fornecedores', fornecedores.getAll)
 
@@ -87,19 +91,23 @@ app.post('/comissao', comissao.find)
  
 app.post('/acesso', acesso.getLogin)
 
+app.post('/periodofinanceiro', Financiero.getById)
+app.post('/financeiro', Financiero.create)
+app.put('/financeiro/:id', Financiero.update)
+app.delete('/financeiro/:id', Financiero.deleteId)
+
 
 //app.listen(port, () => {  console.log(`App running on port ${port}.`)})
 
-
+  /**
 https.createServer({
   key: fs.readFileSync('certificado/private.key'),
   cert: fs.readFileSync('certificado/certificate.crt')
 }, app).listen(port, () => {  console.log(`App running on port ${port}.`)})
-
+ */ 
  
 
-  /**
+
 app.listen(port, () => {
   console.log(`App running on port ${port}.`)
 })
- */ 
