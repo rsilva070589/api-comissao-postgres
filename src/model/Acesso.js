@@ -14,9 +14,7 @@ const getLogin = async (request, response) => {
 
     const queryLogin = `
     SELECT 
-      e.nomefantasia,
-      e.cod_cliente,
-      e.schema,
+      e.*,
       eu.username,
       eu.senha,
       eu.cod_funcao,
@@ -52,6 +50,9 @@ const getLogin = async (request, response) => {
         username: user.username,
         funcao: user.funcao,
         login: true,
+        endereco: user.endereco,
+        logo: user.logo,
+        telefone: user.telefone,
         acessos: acessos_usuario,
       };
 

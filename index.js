@@ -20,6 +20,8 @@ const demanda = require('./src/model/pdv/Demanda')
 
 const Financiero = require('./src/model/pdv/Financeiro')
 
+const clientes = require('./src/model/pdv/Clientes')
+
 
 const port = 4141
 var cors = require('cors');
@@ -32,6 +34,14 @@ app.use(
 )
 
 console.log(process.env.DB_HOST)
+
+
+//app.post('/getProdutos', Produtos.getAll)  
+app.post('/getclientes', clientes.getClientes);
+
+app.post('/clientes', clientes.createCliente)
+app.put('/clientes', clientes.updateCliente)
+app.delete('/clientes', clientes.deleteCliente)
 
 
 app.get('/', (request, response) => { 
@@ -70,6 +80,8 @@ app.put('/vendas', vendas.update)
 app.delete('/vendas', vendas.deleteId)
 app.post('/periodovendas', vendas.getId)
 app.post('/dashboard', vendas.getDasdboard)
+app.post('/pedido', vendas.getPedido)
+
  
 
 app.get('/usuarios', usuarios.getUsers)  

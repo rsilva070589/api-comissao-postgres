@@ -3,17 +3,80 @@ const database = require('../../../config/database.js')
  
 const options = { timeZone: 'America/Sao_Paulo' };
  
+const getPedido = async (request, response) => {
+  try {
+    const schemaUsuario = request.body.SCHEMA;
+    const idVenda = request.body.ID_VENDA;
 
-function dataFormatada(d){ 
-  var data =  new Date(d),
-      dia  = data.getDate().toString(),
-      diaF = (dia.length == 1) ? '0'+dia : dia,
-      mes  = (data.getMonth()+1).toString(), //+1 pois no getMonth Janeiro começa com zero.
-      mesF = (mes.length == 1) ? '0'+mes : mes,
-      anoF = data.getFullYear();
-  return anoF+"/"+mesF+"/"+diaF;
+    let vendaItens = [];
+    let vendaResult = [];
+    let vendaPagamentos = [];
+
+    // Query para obter os itens da venda
+    try {
+      const sqlVendasItens = `
+        SELECT p.codigo_barras AS cod_produto,
+               p.nome,
+               p.valor AS valor_original,
+               vi.qtde,
+               ROUND(CAST(vi.valor AS numeric) / CAST(vi.qtde AS numeric), 2) AS valor_unitario,
+               vi.valor AS valor_final
+        FROM "${schemaUsuario}".vendas_itens vi
+        JOIN "${schemaUsuario}".produtos p ON vi.id_produto = p.id
+        WHERE vi.id = $1
+      `;
+      const itensResult = await database.pool.query(sqlVendasItens, [idVenda]);
+      vendaItens = itensResult.rows;
+    } catch (error) {
+      console.error(`Erro ao obter itens da venda: ${error.message}`);
+    }
+
+    // Query para obter os dados da venda
+    try {
+      const sqlVendas = `
+        SELECT v.id, v.data, cli.nome, cli.cod_cliente,
+               cli.rua || ' ' || cli.numero || ' ' || cli.complemento || ' ' || cli.bairro AS endereco,
+               cli.cidade, cli.estado, cli.cep, cli.email, cli.celular1, cli.celular2,
+               v.vendedor, v.previsao_entrega, v.observacao
+        FROM "${schemaUsuario}".vendas v
+        JOIN "${schemaUsuario}".clientes cli ON v.cod_cliente = cli.cod_cliente
+        WHERE v.id = $1
+      `;
+      const result = await database.pool.query(sqlVendas, [idVenda]);
+      vendaResult = result.rows;
+    } catch (error) {
+      console.error(`Erro ao obter dados da venda: ${error.message}`);
+    }
+
+    // Query para obter os dados de pagamento
+    try {
+      const sqlVendasPagamento = `
+        SELECT f.id, f.descricao, vp.valor
+        FROM "${schemaUsuario}".vendas_pagamento vp
+        JOIN "${schemaUsuario}".formaspagamento f ON vp.cod_forma_pgto = f.id
+        WHERE vp.id_venda = $1
+      `;
+      const pagamentosResult = await database.pool.query(sqlVendasPagamento, [idVenda]);
+      vendaPagamentos = pagamentosResult.rows;
+    } catch (error) {
+      console.error(`Erro ao obter dados de pagamento: ${error.message}`);
+    }
+
+    // Mapeia os dados da venda, incluindo itens e pagamentos
+    const arrayFinal = vendaResult?.map(venda => ({
+      ...venda,
+      itens: vendaItens,
+      pagamentos: vendaPagamentos
+    }));
+
+    response.status(200).json(arrayFinal);
+  } catch (error) {
+    response.status(500).send(`Ocorreu um erro inesperado: ${error.message}`);
   }
+};
 
+
+ 
 const getAll = (request, response) => {
 
   schemaUsuario = request.body.SCHEMA
@@ -68,33 +131,21 @@ const getAll = (request, response) => {
       tipo_venda,valor
       order by id desc
 `
-sqlCorrigeHorario = `update "`+schemaUsuario+`".vendas set data = $1 where data > $1`
+
   
 
-database.pool.query(sqlCorrigeHorario, [dataFormatada(new Date())],(error, results) => {
+database.pool.query(sqlVendasLucro,[request.body.MES], (error, results) => {
   if (error) {
     response.status(500).send(`Ocorreu um ` + error) 
   }
-  if (!error){ 
-    console.log('sucesso Rotina Ajuste horario')
-
-        database.pool.query(sqlVendasLucro,[request.body.MES], (error, results) => {
-      if (error) {
-        response.status(500).send(`Ocorreu um ` + error) 
-      }
-      if (!error){        
-        response.status(200).json(results.rows) 
-      }     
-    })
+  if (!error){        
+    response.status(200).json(results.rows) 
   }     
 })
 
 console.log(request.body.MES)
 
-
 }
-
-
 
 
 const getId = (request, response) => {
@@ -159,6 +210,8 @@ const getId = (request, response) => {
       response.status(200).json(arrayVendasPeriodo)  }
   })?.then(x => x)
 }
+
+
 const getDasdboard = (request, response) => {
   schemaUsuario = request.body.SCHEMA
     const context = {} 
@@ -403,4 +456,5 @@ module.exports = {
   create,
   update,
   deleteId,
+  getPedido
 }
