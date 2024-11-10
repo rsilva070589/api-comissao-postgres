@@ -2,6 +2,11 @@ const express = require('express')
 const https = require('https')
 const fs = require('fs')
 
+// Carregue os certificados SSL
+const privateKey = fs.readFileSync('/home/rsilva070589/projetos/api-comissao-postgres/certificado/private.key', 'utf8');
+const certificate = fs.readFileSync('/home/rsilva070589/projetos/api-comissao-postgres/certificado/certificate.pem', 'utf8');
+
+
 const bodyParser = require('body-parser')
 const app         = express()
 const usuarios  =  require('./src/model/Usuarios') 
@@ -47,6 +52,7 @@ app.delete('/clientes', clientes.deleteCliente)
 app.get('/', (request, response) => { 
   response.send({ result: 'Bem Vindo a Api Postgres'}) 
 })
+
 
 
 
@@ -120,6 +126,11 @@ https.createServer({
  
 
 
-app.listen(port, () => {
-  console.log(`App running on port ${port}.`)
+//app.listen(port, () => {
+//  console.log(`App running on port ${port}.`)
+//})
+
+const credentials = { key: privateKey, cert: certificate };
+https.createServer(credentials, app).listen(port, () => {
+  console.log('Servidor HTTPS rodando em '+port);
 })
